@@ -76,11 +76,11 @@ describe("connection routes", () => {
     expect(connectionRouteLabel(RELAY)).toBe("T3 Connect");
   });
 
-  it("places a new route after faster kinds and ahead of T3 Connect", () => {
+  it("prefers a new Tailscale route while keeping LAN and T3 Connect as fallbacks", () => {
     expect(insertRoute([RELAY], LAN)).toEqual([LAN, RELAY]);
-    expect(insertRoute([LAN, RELAY], TAILNET)).toEqual([LAN, TAILNET, RELAY]);
-    expect(insertRoute([TAILNET], LAN)).toEqual([LAN, TAILNET]);
-    expect(insertRoute([LAN, TAILNET], RELAY)).toEqual([LAN, TAILNET, RELAY]);
+    expect(insertRoute([LAN, RELAY], TAILNET)).toEqual([TAILNET, LAN, RELAY]);
+    expect(insertRoute([TAILNET], LAN)).toEqual([TAILNET, LAN]);
+    expect(insertRoute([TAILNET, LAN], RELAY)).toEqual([TAILNET, LAN, RELAY]);
   });
 
   it("keeps a user's order when a saved route is replaced", () => {

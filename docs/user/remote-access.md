@@ -3,6 +3,31 @@
 Connect a phone, browser, or another desktop app to T3 Code running on a different
 machine. That machine must stay running and reachable while you work.
 
+## Connect with Tailscale
+
+Tailscale is the default connection option in whitelabel. Connect both devices to
+your tailnet. On the host, enable **Settings → Sharing & access → Tailscale HTTPS**
+and create a pairing link. For a command-line host, run
+`t3 serve --tailscale-serve`; for a server already running, use `t3 pair --tailscale`.
+See [Tailscale HTTPS](#tailscale-https) for HTTPS setup and port options.
+
+On web or desktop, choose **Add environment → Tailscale** and paste the pairing
+link, or enter the host's MagicDNS name and pairing code. Bare names use HTTPS.
+The desktop's **Find tailnet machines** button reads the local Tailscale client
+only when requested. It fills a machine's HTTPS address; **Online in Tailscale**
+does not verify that the machine runs a T3 server or grants access to it.
+If discovery is unavailable, you can still enter a link manually.
+
+The official mobile app can use the same HTTPS pairing link or QR code when
+Tailscale is connected on the phone. Mobile, web, and desktop then see the same
+server's threads and updates. No separate T3 Connect account is required. This
+connects clients to one server; it does not move work between different servers.
+Keep the host and its server running while using another device.
+
+New routes in whitelabel prefer Tailscale ahead of LAN and T3 Connect, while
+existing custom route order is preserved. SSH and other server addresses remain
+available in **Add environment**. T3 Connect remains an optional connection route.
+
 ## T3 Connect
 
 T3 Connect makes an environment available to your other devices without setting
@@ -72,8 +97,8 @@ other VPNs such as Cloudflare WARP, so an address in that range shows as VPN
 unless the machine confirms it is on Tailscale. To add a route, choose **Add
 route** in the machine's route list, or next to it in the T3 Connect list.
 Pairing the same machine again over another address also adds a route instead
-of a second machine. A new route is placed by speed, in that order, and you can
-reorder routes at any time.
+of a second machine. New routes prefer Tailscale over LAN and T3 Connect in
+whitelabel, and you can reorder routes at any time.
 
 While connected through T3 Connect or a paired address, T3 Code also learns the
 machine's current LAN and Tailscale addresses and adds them as routes, so

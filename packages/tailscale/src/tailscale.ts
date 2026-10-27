@@ -288,6 +288,68 @@ export const readTailscaleStatus = readTailscaleOutput("status", ["status", "--j
   Effect.flatMap(parseTailscaleStatus),
 );
 
+const TailscalePeerDiscoveryJson = Schema.Struct({
+  BackendState: Schema.optional(Schema.String),
+  Peer: Schema.optional(
+    Schema.NullOr(
+      Schema.Record(
+        Schema.String,
+        Schema.Struct({
+          DNSName: Schema.optional(Schema.String),
+          Online: Schema.optional(Schema.Boolean),
+          OS: Schema.optional(Schema.String),
+        }),
+      ),
+    ),
+  ),
+});
+const decodePeerDiscovery = Schema.decodeEffect(Schema.fromJsonString(TailscalePeerDiscoveryJson));
+
+export interface TailscalePeerDiscovery {
+  readonly backendState: string;
+  readonly peers: ReadonlyArray<{
+    readonly name: string;
+    readonly dnsName: string;
+    readonly online: boolean;
+    readonly os: string;
+  }>;
+}
+
+export const parseTailscalePeers = (
+  raw: string,
+): Effect.Effect<TailscalePeerDiscovery, TailscaleStatusParseError> =>
+  decodePeerDiscovery(raw).pipe(
+    Effect.mapError((cause) => new TailscaleStatusParseError({ cause })),
+    Effect.map((status) => {
+      const backendState = status.BackendState ?? "Unknown";
+      const peers: Array<{ name: string; dnsName: string; online: boolean; os: string }> = [];
+      const seen = new Set<string>();
+      for (const peer of Object.values(backendState === "Running" ? (status.Peer ?? {}) : {})) {
+        const dnsName = peer.DNSName?.trim().replace(/\.$/, "").toLowerCase();
+        if (!dnsName || !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/u.test(dnsName) || seen.has(dnsName)) {
+          continue;
+        }
+        seen.add(dnsName);
+        peers.push({
+          name: dnsName.split(".")[0]!,
+          dnsName,
+          online: peer.Online ?? false,
+          os: peer.OS ?? "",
+        });
+      }
+      peers.sort(
+        (a, b) => Number(b.online) - Number(a.online) || a.dnsName.localeCompare(b.dnsName),
+      );
+      return { backendState, peers };
+    }),
+  );
+
+export const readTailscalePeers: Effect.Effect<
+  TailscalePeerDiscovery,
+  TailscaleCommandError | TailscaleStatusParseError,
+  ChildProcessSpawner.ChildProcessSpawner
+> = readTailscaleOutput("status", ["status", "--json"]).pipe(Effect.flatMap(parseTailscalePeers));
+
 const TailscaleExitNodeJson = Schema.Struct({
   ExitNodeStatus: Schema.optional(Schema.Struct({ Online: Schema.optional(Schema.Unknown) })),
   Peer: Schema.optional(

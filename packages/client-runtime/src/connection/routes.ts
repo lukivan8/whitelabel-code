@@ -104,8 +104,8 @@ export function connectionRouteKind(route: ConnectionRoute): ConnectionRouteKind
 
 const ROUTE_KIND_RANK: Record<ConnectionRouteKind, number> = {
   loopback: 0,
-  lan: 1,
-  tailnet: 2,
+  lan: 2,
+  tailnet: 1,
   vpn: 2,
   public: 3,
   ssh: 4,

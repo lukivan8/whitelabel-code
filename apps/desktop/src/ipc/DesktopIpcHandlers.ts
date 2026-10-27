@@ -15,6 +15,7 @@ import {
 } from "./methods/localEnvironment.ts";
 import {
   getAdvertisedEndpoints,
+  discoverTailscalePeers,
   getServerExposureState,
   setServerExposureMode,
   setTailscaleServeEnabled,
@@ -136,6 +137,7 @@ export const installDesktopIpcHandlers = Effect.fn("desktop.ipc.installHandlers"
   yield* ipc.handle(setServerExposureMode);
   yield* ipc.handle(setTailscaleServeEnabled);
   yield* ipc.handle(getAdvertisedEndpoints);
+  yield* ipc.handle(discoverTailscalePeers);
 
   yield* ipc.handle(getWslState);
   yield* ipc.handle(setWslBackendEnabled);

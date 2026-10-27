@@ -2,7 +2,9 @@ import {
   AdvertisedEndpoint,
   DesktopServerExposureModeSchema,
   DesktopServerExposureStateSchema,
+  DesktopTailscaleDiscoverySchema,
 } from "@t3tools/contracts";
+import { readTailscalePeers } from "@t3tools/tailscale";
 import * as Effect from "effect/Effect";
 import * as Schema from "effect/Schema";
 
@@ -14,6 +16,13 @@ import * as DesktopIpc from "../DesktopIpc.ts";
 const SetTailscaleServeEnabledInput = Schema.Struct({
   enabled: Schema.Boolean,
   port: Schema.optionalKey(Schema.Number),
+});
+
+export const discoverTailscalePeers = DesktopIpc.makeIpcMethod({
+  channel: IpcChannels.DISCOVER_TAILSCALE_PEERS_CHANNEL,
+  payload: Schema.Void,
+  result: DesktopTailscaleDiscoverySchema,
+  handler: Effect.fn("desktop.ipc.tailscale.discoverPeers")(() => readTailscalePeers),
 });
 
 export const getServerExposureState = DesktopIpc.makeIpcMethod({

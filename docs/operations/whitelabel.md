@@ -85,6 +85,12 @@ PNG/ICO renditions with `vp run icons:whitelabel`.
 
 ## SSH and other T3 Code installations
 
+Tailscale is the primary pairing option in onboarding and Add environment.
+Desktop peer discovery is an optional local IPC capability, so older desktop
+bridges fall back to manual pairing. The server RPC protocol is unchanged and
+the official mobile app can pair over the same Tailscale HTTPS endpoint. See
+[Connect with Tailscale](../user/remote-access.md#connect-with-tailscale).
+
 SSH is built in and does not require a T3 Connect account. In the desktop app,
 open **Settings → Environments → Add environment → SSH**, then enter an SSH
 alias from `~/.ssh/config` or `user@host`. The desktop manages authentication,

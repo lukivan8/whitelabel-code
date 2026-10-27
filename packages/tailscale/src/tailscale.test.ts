@@ -12,6 +12,7 @@ import {
   parseTailscaleExitNode,
   parseTailscaleSshEnabled,
   parseTailscaleStatus,
+  parseTailscalePeers,
   readTailscaleSshEnabled,
   readTailscaleStatus,
   TailscaleCommandExitError,
@@ -20,6 +21,62 @@ import {
 } from "./tailscale.ts";
 
 const encoder = new TextEncoder();
+
+describe("tailnet peer discovery", () => {
+  it.effect(
+    "uses MagicDNS names, sorts online machines first, and omits invalid or duplicate hosts",
+    () =>
+      Effect.gen(function* () {
+        const result = yield* parseTailscalePeers(
+          JSON.stringify({
+            BackendState: "Running",
+            Self: { DNSName: "this-mac.tail123.ts.net." },
+            Peer: {
+              offline: { DNSName: "archive.tail123.ts.net.", Online: false },
+              online: { DNSName: "Devbox.tail123.ts.net.", Online: true, OS: "linux" },
+              duplicate: { DNSName: "devbox.tail123.ts.net." },
+              noDns: { HostName: "unresolvable", TailscaleIPs: ["100.64.0.1"] },
+              invalid: { DNSName: "host.example/path", Online: true },
+            },
+          }),
+        );
+        assert.deepEqual(result, {
+          backendState: "Running",
+          peers: [
+            { name: "devbox", dnsName: "devbox.tail123.ts.net", online: true, os: "linux" },
+            { name: "archive", dnsName: "archive.tail123.ts.net", online: false, os: "" },
+          ],
+        });
+      }),
+  );
+  it.effect.each(["NeedsLogin", "Stopped", "NeedsMachineAuth"])(
+    "does not offer stale peers while %s",
+    (backendState) =>
+      Effect.gen(function* () {
+        const result = yield* parseTailscalePeers(
+          JSON.stringify({
+            BackendState: backendState,
+            Peer: {
+              stale: { DNSName: "old.tail123.ts.net.", Online: true },
+            },
+          }),
+        );
+        assert.deepEqual(result, { backendState, peers: [] });
+      }),
+  );
+  it.effect("accepts an empty tailnet and reports malformed status", () =>
+    Effect.gen(function* () {
+      assert.deepEqual(yield* parseTailscalePeers('{"BackendState":"Running","Peer":null}'), {
+        backendState: "Running",
+        peers: [],
+      });
+      assert.instanceOf(
+        yield* Effect.flip(parseTailscalePeers("not json")),
+        TailscaleStatusParseError,
+      );
+    }),
+  );
+});
 
 function assertCarriesNoSecret(error: object, secret: string): void {
   const seen = new WeakSet<object>();

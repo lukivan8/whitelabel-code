@@ -224,7 +224,9 @@ export function parsePairingUrlFields(
       /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//u.test(trimmed) || trimmed.startsWith("//")
         ? trimmed
         : `https://${trimmed}`;
-    const url = new URL(urlLikeInput, window.location.origin);
+    const url = trimmed.startsWith("//")
+      ? new URL(urlLikeInput, window.location.origin)
+      : new URL(urlLikeInput);
     const hostedPairingRequest = readHostedPairingRequest(url);
     if (hostedPairingRequest) {
       return {
@@ -263,6 +265,17 @@ export function parseRemotePairingFields(input: {
     throw new Error("Enter a pairing code.");
   }
   return { host, pairingCode };
+}
+
+export function parseTailscalePairingFields(input: {
+  readonly host: string;
+  readonly pairingCode: string;
+}) {
+  const fields = parseRemotePairingFields(input);
+  return {
+    ...fields,
+    host: /^[a-z][a-z\d+.-]*:\/\//iu.test(fields.host) ? fields.host : `https://${fields.host}`,
+  };
 }
 
 export function formatDesktopSshConnectionError(error: unknown): string {

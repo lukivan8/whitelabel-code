@@ -18,6 +18,7 @@ import * as Option from "effect/Option";
 import { cn } from "../../lib/utils";
 import { formatDesktopSshTarget } from "./EnvironmentRow";
 import { Input } from "../ui/input";
+import { TailscaleConnectionSetup } from "./TailscaleConnectionSetup";
 import { CommandShortcut } from "../ui/command";
 import {
   Autocomplete,
@@ -61,6 +62,7 @@ import {
   parseManualDesktopSshTarget,
   parsePairingUrlFields,
   parseRemotePairingFields,
+  parseTailscalePairingFields,
   formatDesktopSshConnectionError,
 } from "./ConnectionsSettings.logic";
 
@@ -108,7 +110,9 @@ export function AddEnvironmentDialog({
     }
     return keys;
   })();
-  const [savedBackendMode, setSavedBackendMode] = useState<"remote" | "ssh">("remote");
+  const [savedBackendMode, setSavedBackendMode] = useState<"tailscale" | "remote" | "ssh">(
+    "tailscale",
+  );
   const [savedBackendHost, setSavedBackendHost] = useState("");
   const [savedBackendPairingCode, setSavedBackendPairingCode] = useState("");
   const [savedBackendSshHost, setSavedBackendSshHost] = useState("");
@@ -198,7 +202,9 @@ export function AddEnvironmentDialog({
     onErrorChange(null);
     let remotePairingInput: ReturnType<typeof parseRemotePairingFields>;
     try {
-      remotePairingInput = parseRemotePairingFields({
+      remotePairingInput = (
+        savedBackendMode === "tailscale" ? parseTailscalePairingFields : parseRemotePairingFields
+      )({
         host: savedBackendHost,
         pairingCode: savedBackendPairingCode,
       });
@@ -335,7 +341,7 @@ export function AddEnvironmentDialog({
     setSavedBackendHost(value);
   };
   const renderConnectionModeCard = (input: {
-    readonly mode: "remote" | "ssh";
+    readonly mode: "tailscale" | "remote" | "ssh";
     readonly title: string;
     readonly description: string;
     readonly icon?: ReactNode;
@@ -384,7 +390,11 @@ export function AddEnvironmentDialog({
           <Input
             value={savedBackendHost}
             onChange={(event) => handleSavedBackendHostChange(event.target.value)}
-            placeholder="backend.example.com"
+            placeholder={
+              savedBackendMode === "tailscale"
+                ? "https://devbox.your-tailnet.ts.net"
+                : "backend.example.com"
+            }
             disabled={isAddingSavedBackend}
             spellCheck={false}
           />
@@ -441,7 +451,13 @@ export function AddEnvironmentDialog({
   };
   const renderRemoteModeBody = () => (
     <div className="space-y-4">
-      {relayRouteOffer !== null ? (
+      {savedBackendMode === "tailscale" ? (
+        <TailscaleConnectionSetup
+          disabled={isAddingSavedBackend}
+          onSelectHost={setSavedBackendHost}
+        />
+      ) : null}
+      {savedBackendMode === "remote" && relayRouteOffer !== null ? (
         <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
           <p className="text-xs text-muted-foreground">
             This machine is on your T3 Connect account. Use it as a fallback route.
@@ -617,16 +633,22 @@ export function AddEnvironmentDialog({
           <DialogDescription>
             {routeTarget
               ? "Pair this machine again over another address, such as its Tailscale name. It joins the existing routes instead of adding a second machine."
-              : "Pair another environment to this client."}
+              : "Connect a computer over Tailscale, or choose another connection method."}
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {renderConnectionModeCard({
+                mode: "tailscale",
+                title: "Tailscale",
+                description: "Connect directly over your tailnet. No T3 Connect account needed.",
+                icon: <ChevronsLeftRightEllipsisIcon aria-hidden className="size-4" />,
+              })}
               {renderConnectionModeCard({
                 mode: "remote",
-                title: "Remote link",
-                description: "Enter a backend host and pairing code.",
+                title: "Other address",
+                description: "Use a LAN, VPN, or other server address and pairing code.",
                 icon: <ChevronsLeftRightEllipsisIcon aria-hidden className="size-4" />,
               })}
               {desktopBridge

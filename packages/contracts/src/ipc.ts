@@ -379,6 +379,18 @@ export const DesktopSshEnvironmentTargetSchema = Schema.Struct({
 export type DesktopSshEnvironmentTarget = typeof DesktopSshEnvironmentTargetSchema.Type;
 
 export type DesktopSshHostSource = "ssh-config" | "known-hosts";
+export const DesktopTailscaleDiscoverySchema = Schema.Struct({
+  backendState: Schema.String,
+  peers: Schema.Array(
+    Schema.Struct({
+      name: Schema.String,
+      dnsName: Schema.String,
+      online: Schema.Boolean,
+      os: Schema.String,
+    }),
+  ),
+});
+export type DesktopTailscaleDiscovery = typeof DesktopTailscaleDiscoverySchema.Type;
 export const DesktopSshHostSourceSchema = Schema.Literals(["ssh-config", "known-hosts"]);
 
 export interface DesktopDiscoveredSshHost extends DesktopSshEnvironmentTarget {
@@ -1032,6 +1044,7 @@ export interface DesktopBridge {
   setConnectionCatalog?: (catalog: string) => Promise<boolean>;
   clearConnectionCatalog?: () => Promise<void>;
   discoverSshHosts: () => Promise<readonly DesktopDiscoveredSshHost[]>;
+  discoverTailscalePeers?: () => Promise<DesktopTailscaleDiscovery>;
   resolveSshHost: (alias: string) => Promise<DesktopSshEnvironmentTarget>;
   requestSnapShotPermissions?: (includeAccessibility: boolean) => Promise<void>;
   getSnapShotState?: () => Promise<DesktopSnapShotState>;

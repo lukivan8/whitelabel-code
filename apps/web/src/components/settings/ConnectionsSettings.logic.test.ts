@@ -4,7 +4,38 @@ import {
   applyWslEnableSelection,
   selectQrEndpointOption,
   togglePairingScopeSelection,
+  parseTailscalePairingFields,
 } from "./ConnectionsSettings.logic";
+
+describe("Tailscale pairing", () => {
+  it("uses HTTPS for a bare MagicDNS host and keeps an explicit port", () => {
+    expect(
+      parseTailscalePairingFields({ host: " devbox.tail123.ts.net:8443 ", pairingCode: " CODE " }),
+    ).toEqual({
+      host: "https://devbox.tail123.ts.net:8443",
+      pairingCode: "CODE",
+    });
+  });
+  it("preserves explicit protocols and requires a pairing credential", () => {
+    expect(
+      parseTailscalePairingFields({ host: "http://100.64.0.1:3773", pairingCode: "CODE" }).host,
+    ).toBe("http://100.64.0.1:3773");
+    expect(() =>
+      parseTailscalePairingFields({ host: "devbox.tail123.ts.net", pairingCode: "" }),
+    ).toThrow("Enter a pairing code");
+  });
+  it("uses the host and credential from a complete pairing link", () => {
+    expect(
+      parseTailscalePairingFields({
+        host: "https://devbox.tail123.ts.net/pair#token=SECRET",
+        pairingCode: "stale",
+      }),
+    ).toEqual({
+      host: "https://devbox.tail123.ts.net",
+      pairingCode: "SECRET",
+    });
+  });
+});
 
 describe("togglePairingScopeSelection", () => {
   it.each([

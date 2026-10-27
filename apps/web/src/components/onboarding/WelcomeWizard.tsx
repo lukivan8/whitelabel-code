@@ -89,6 +89,7 @@ import { T3Wordmark } from "../T3Wordmark";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Button } from "../ui/button";
 import { CommandBlock } from "../CommandBlock";
+import { TailscaleConnectionSetup } from "../settings/TailscaleConnectionSetup";
 import { Checkbox } from "../ui/checkbox";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "../ui/collapsible";
 import { Input } from "../ui/input";
@@ -313,7 +314,7 @@ function ConnectionStep({
   const directEnvironments = environments.filter(
     (environment) => !cloudEnabled || !isOnboardingRelayEnvironment(environment),
   );
-  const [pairingOpen, setPairingOpen] = useState(expandPairingInitially);
+  const [pairingOpen, setPairingOpen] = useState(true);
   const [isPairing, setIsPairing] = useState(false);
   const { ready, skippedIds } = resolveOnboardingSetup(environments, selectedIds);
   const skippedLabels = environments
@@ -382,14 +383,6 @@ function ConnectionStep({
         </fieldset>
       ) : null}
       <div className="mt-4 space-y-2">
-        {cloudEnabled ? (
-          <ConnectAccountOption
-            autoSelectedComputers={autoSelectedComputers}
-            disabled={isPairing}
-            selectedIds={selectedIds}
-            onToggleEnvironment={onToggleEnvironment}
-          />
-        ) : null}
         <div className="rounded-lg border border-border bg-background">
           <Collapsible open={pairingOpen} onOpenChange={setPairingOpen}>
             <CollapsibleTrigger
@@ -403,13 +396,14 @@ function ConnectionStep({
               }
             >
               <LinkIcon className="size-4 text-muted-foreground" />
-              <span className="flex-1 text-left">Add a computer</span>
+              <span className="flex-1 text-left">Connect over Tailscale</span>
               <ChevronRightIcon
                 className={cn("size-4 text-muted-foreground", pairingOpen && "rotate-90")}
               />
             </CollapsibleTrigger>
             <CollapsiblePanel>
-              <div className="px-3 pb-3">
+              <div className="space-y-3 px-3 pb-3">
+                <TailscaleConnectionSetup disabled={isPairing} />
                 <PairingForm
                   isPairing={isPairing}
                   setIsPairing={setIsPairing}
@@ -423,6 +417,14 @@ function ConnectionStep({
             </CollapsiblePanel>
           </Collapsible>
         </div>
+        {cloudEnabled ? (
+          <ConnectAccountOption
+            autoSelectedComputers={autoSelectedComputers}
+            disabled={isPairing}
+            selectedIds={selectedIds}
+            onToggleEnvironment={onToggleEnvironment}
+          />
+        ) : null}
       </div>
       {skippedLabels.length > 0 ? (
         <p className="mt-4 text-xs text-muted-foreground">
@@ -473,7 +475,7 @@ function ConnectAccountOption({
   const { environments } = useEnvironments();
   const { isLoaded, isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const { openAuthPrompt } = useT3ConnectAuthPrompt();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [discoveryReady, setDiscoveryReady] = useState(false);
   const onDiscoveryReady = () => setDiscoveryReady(true);
 
@@ -602,7 +604,7 @@ function PairingForm({
             spellCheck={false}
             nativeInput
             readOnly={isPairing}
-            placeholder="https://your-server:5230/pair#token=…"
+            placeholder="https://devbox.your-tailnet.ts.net/pair#token=…"
             value={pairingUrl}
             onChange={(event) => setPairingUrl(event.currentTarget.value)}
             onKeyDown={(event) => {
