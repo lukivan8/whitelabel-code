@@ -21,8 +21,13 @@ export function getDesktopScheme(isDevelopment: boolean): string {
   return isDevelopment ? DESKTOP_DEVELOPMENT_SCHEME : DESKTOP_PRODUCTION_SCHEME;
 }
 
+// Official servers authorize these renderer origins independently of OS app links.
+export function getDesktopRendererScheme(isDevelopment: boolean): string {
+  return isDevelopment ? "t3code-dev" : "t3code";
+}
+
 function getDesktopOrigin(isDevelopment: boolean): string {
-  return `${getDesktopScheme(isDevelopment)}://${DESKTOP_HOST}`;
+  return `${getDesktopRendererScheme(isDevelopment)}://${DESKTOP_HOST}`;
 }
 
 export function getDesktopUrl(isDevelopment: boolean): string {
@@ -112,7 +117,7 @@ function withContentSecurityPolicy(response: Response, policy: string): Response
 function registerDesktopSchemePrivilegesSync(): void {
   Electron.protocol.registerSchemesAsPrivileged([
     {
-      scheme: DESKTOP_PRODUCTION_SCHEME,
+      scheme: getDesktopRendererScheme(false),
       privileges: {
         standard: true,
         secure: true,
@@ -124,7 +129,7 @@ function registerDesktopSchemePrivilegesSync(): void {
       },
     },
     {
-      scheme: DESKTOP_DEVELOPMENT_SCHEME,
+      scheme: getDesktopRendererScheme(true),
       privileges: {
         standard: true,
         secure: true,

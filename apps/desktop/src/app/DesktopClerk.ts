@@ -89,7 +89,7 @@ function createDesktopClerkBridge(stateDir: string, isDevelopment: boolean) {
     manageSingleInstanceLock: false,
     passkeys: true,
     renderer: {
-      scheme: ElectronProtocol.getDesktopScheme(isDevelopment),
+      scheme: ElectronProtocol.getDesktopRendererScheme(isDevelopment),
       host: ElectronProtocol.DESKTOP_HOST,
     },
   });
@@ -176,8 +176,15 @@ export const make = Effect.gen(function* () {
         return true;
       };
       const resumeProviderAuth = (value: string | undefined) => {
-        const destination = providerAuthReturnUrl(value);
-        const expectedOrigin = `${ElectronProtocol.getDesktopScheme(environment.isDevelopment)}://app`;
+        let destination = providerAuthReturnUrl(value);
+        const expectedOrigin = ElectronProtocol.getDesktopUrl(environment.isDevelopment).replace(
+          /\/$/,
+          "",
+        );
+        const appLinkOrigin = `${ElectronProtocol.getDesktopScheme(environment.isDevelopment)}://app`;
+        if (destination?.startsWith(`${appLinkOrigin}/`)) {
+          destination = expectedOrigin + destination.slice(appLinkOrigin.length);
+        }
         if (!destination?.startsWith(`${expectedOrigin}/`)) return false;
         void runPromise(
           Effect.gen(function* () {

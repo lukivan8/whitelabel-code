@@ -82,3 +82,27 @@ own configuration before distributing a fully independent product.
 
 The web and desktop use the W mark in `assets/whitelabel/icon.svg`. Regenerate its
 PNG/ICO renditions with `vp run icons:whitelabel`.
+
+## SSH and other T3 Code installations
+
+SSH is built in and does not require a T3 Connect account. In the desktop app,
+open **Settings → Environments → Add environment → SSH**, then enter an SSH
+alias from `~/.ssh/config` or `user@host`. The desktop manages authentication,
+starts or reuses the remote server, and forwards its local port. Agents, Git,
+files, and provider credentials stay on that host. See the requirements in
+[Desktop-managed SSH](../user/remote-access.md#desktop-managed-ssh).
+
+The SSH bootstrap downloads the official server at the desktop's upstream
+version, independently of whitelabel's desktop update feed. Keep that version
+available upstream; a custom unpublished version needs a configured runtime
+source. Desktop updates still come from this fork.
+
+The fork retains upstream RPC contracts and the renderer origins official servers
+accept. Its `whitelabel` OS links, app ID, and storage remain separate. Official
+clients can pair with the fork server, and the fork can connect to compatible
+official servers. This depends on protocol/version compatibility and advertised
+capabilities; it is not a promise that arbitrary future versions interoperate.
+Existing installations still need a new pairing or SSH connection because the
+fork has its own client profile. Native mobile apps do not manage this desktop's
+SSH tunnel: use a reachable LAN/VPN endpoint for mobile access, or keep this
+desktop running and configure a separately reachable host connection.

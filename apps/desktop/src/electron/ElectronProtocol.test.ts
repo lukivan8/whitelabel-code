@@ -21,6 +21,12 @@ import * as ElectronProtocol from "./ElectronProtocol.ts";
 const layerProtocol = ElectronProtocol.layer.pipe(Layer.provide(NodeServices.layer));
 
 describe("ElectronProtocol", () => {
+  it("keeps upstream renderer origins while using separate whitelabel app links", () => {
+    assert.equal(ElectronProtocol.getDesktopScheme(false), "whitelabel");
+    assert.equal(ElectronProtocol.getDesktopScheme(true), "whitelabel-dev");
+    assert.equal(ElectronProtocol.getDesktopUrl(false), "t3code://app/");
+    assert.equal(ElectronProtocol.getDesktopUrl(true), "t3code-dev://app/");
+  });
   beforeEach(() => {
     handleMock.mockReset();
     netFetchMock.mockReset();
