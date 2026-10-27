@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // @effect-diagnostics nodeBuiltinImport:off - Node's typed junction API avoids Windows symlink privileges while keeping the probe isolated.
 
+import { FORK_APP_ID, FORK_NAME, FORK_REPOSITORY } from "@t3tools/shared/forkBranding";
+
 import * as NodeFSP from "node:fs/promises";
 import * as NodeCrypto from "node:crypto";
 import * as NodeModule from "node:module";
@@ -30,11 +32,7 @@ import {
   updateReleasePackageVersions,
 } from "./update-release-package-versions.ts";
 import { applyWebBrandAssets } from "./apply-web-brand-assets.ts";
-import {
-  BRAND_ASSET_PATHS,
-  resolveWebAssetBrandForChannel,
-  type WebAssetBrand,
-} from "./lib/brand-assets.ts";
+import { resolveWebAssetBrandForChannel, type WebAssetBrand } from "./lib/brand-assets.ts";
 import { getDefaultBuildArch } from "./lib/build-target-arch.ts";
 import {
   findInlinedExternalPackages,
@@ -62,7 +60,7 @@ import { Command, Flag } from "effect/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 const LINUX_ICON_SIZES = [16, 22, 24, 32, 48, 64, 128, 256, 512] as const;
-const DESKTOP_APP_ID = "com.t3tools.t3code";
+const DESKTOP_APP_ID = FORK_APP_ID;
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/u;
 
 const BuildPlatform = Schema.Literals(["mac", "linux", "win"]);
@@ -2689,7 +2687,7 @@ export const resolveGitHubPublishConfig = Effect.fn("resolveGitHubPublishConfig"
   const rawRepo = (
     Option.getOrUndefined(env.updateRepository)?.trim() ||
     Option.getOrUndefined(env.githubRepository)?.trim() ||
-    ""
+    FORK_REPOSITORY
   ).trim();
   if (!rawRepo) return undefined;
 
@@ -2717,19 +2715,11 @@ export function resolveDesktopWebAssetBrand(version: string): WebAssetBrand {
   return resolveWebAssetBrandForChannel(resolveDesktopUpdateChannel(version));
 }
 
-export function resolveDesktopBuildIconAssets(version: string): DesktopBuildIconAssets {
-  if (resolveDesktopUpdateChannel(version) === "nightly") {
-    return {
-      macIconPng: BRAND_ASSET_PATHS.nightlyMacIconPng,
-      linuxIconPng: BRAND_ASSET_PATHS.nightlyLinuxIconPng,
-      windowsIconIco: BRAND_ASSET_PATHS.nightlyWindowsIconIco,
-    };
-  }
-
+export function resolveDesktopBuildIconAssets(_version: string): DesktopBuildIconAssets {
   return {
-    macIconPng: BRAND_ASSET_PATHS.productionMacIconPng,
-    linuxIconPng: BRAND_ASSET_PATHS.productionLinuxIconPng,
-    windowsIconIco: BRAND_ASSET_PATHS.productionWindowsIconIco,
+    macIconPng: "assets/whitelabel/icon-1024.png",
+    linuxIconPng: "assets/whitelabel/icon-1024.png",
+    windowsIconIco: "assets/whitelabel/icon.ico",
   };
 }
 
@@ -2750,8 +2740,8 @@ export function resolvePackageManagerUserAgent(packageManager: string): string {
 
 export function resolveDesktopProductName(version: string): string {
   return resolveDesktopUpdateChannel(version) === "nightly"
-    ? "T3 Code (Nightly)"
-    : (desktopPackageJson.productName ?? "T3 Code");
+    ? `${FORK_NAME} (Nightly)`
+    : (desktopPackageJson.productName ?? FORK_NAME);
 }
 
 export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
@@ -2773,7 +2763,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
   const buildConfig: Record<string, unknown> = {
     appId: DESKTOP_APP_ID,
     productName: resolveDesktopProductName(version),
-    artifactName: "T3-Code-${version}-${arch}.${ext}",
+    artifactName: "whitelabel-${version}-${arch}.${ext}",
     electronLanguages: [...DESKTOP_ELECTRON_LANGUAGES],
     files: [
       ...DESKTOP_FILE_EXCLUSIONS,
@@ -2846,8 +2836,8 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       },
       protocols: [
         {
-          name: "T3 Code",
-          schemes: ["t3code", "t3code-dev"],
+          name: FORK_NAME,
+          schemes: [FORK_NAME, `${FORK_NAME}-dev`],
         },
         {
           name: "Web site URL",
@@ -2891,20 +2881,20 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
     const repoRoot = yield* RepoRoot;
     buildConfig.linux = {
       target: target === "AppImage" ? [target, "deb"] : [target],
-      executableName: "t3code",
+      executableName: FORK_NAME,
       icon: "icons",
       category: "Development",
       synopsis: "Desktop GUI for coding agents",
       maintainer: "T3 Tools <hello@t3.codes>",
       protocols: [
         {
-          name: "T3 Code",
-          schemes: ["t3code", "t3code-dev"],
+          name: FORK_NAME,
+          schemes: [FORK_NAME, `${FORK_NAME}-dev`],
         },
       ],
       desktop: {
         entry: {
-          StartupWMClass: "t3code",
+          StartupWMClass: FORK_NAME,
         },
       },
     };
@@ -3852,7 +3842,7 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
       ? path.join(stageAppDir, WINDOWS_SERVER_RESOURCE_SOURCE_DIR, WINDOWS_SERVER_ASAR_RESOURCE)
       : undefined;
   const stagePackageJson: StagePackageJson = {
-    name: "t3code",
+    name: "whitelabel",
     version: appVersion,
     buildVersion: appVersion,
     t3codeCommitHash: commitHash,
@@ -3863,8 +3853,8 @@ const buildDesktopArtifactUnlocked = Effect.fn("buildDesktopArtifactUnlocked")(f
     description:
       "T3 Code is an open-source desktop app for coding agents. Work with your existing agent subscriptions, review code changes, and run commands in your projects. Connect from desktop, web, or mobile to continue working remotely.",
     license: "MIT",
-    homepage: "https://t3.codes",
-    author: "T3 Tools",
+    homepage: `https://github.com/${FORK_REPOSITORY}`,
+    author: "lukivan8",
     main: "apps/desktop/dist-electron/boot.cjs",
     build: yield* createBuildConfig(
       options.platform,

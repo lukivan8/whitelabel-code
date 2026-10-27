@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./forkBranding": {
+      "types": "./src/forkBranding.ts",
+      "import": "./src/forkBranding.ts"
+    },
     "./changedFileKind": {
       "types": "./src/changedFileKind.ts",
       "import": "./src/changedFileKind.ts"

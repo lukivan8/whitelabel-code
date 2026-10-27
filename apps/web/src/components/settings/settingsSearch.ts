@@ -1,3 +1,4 @@
+import { FORK_NAME } from "@t3tools/shared/forkBranding";
 import { HOSTED_APP_CHANNEL } from "~/branding";
 import { isElectron } from "~/env";
 import { isMacPlatform, isWindowsPlatform, normalizeSearchText } from "~/lib/utils";
@@ -643,7 +644,7 @@ export const SETTINGS_SEARCH_ITEMS = [
   },
   {
     id: "cli-command",
-    title: "t3 command",
+    title: `${FORK_NAME} command`,
     to: "/settings/about",
     searchTerms: ["cli terminal shell path install command line"],
     desktopOnly: true,

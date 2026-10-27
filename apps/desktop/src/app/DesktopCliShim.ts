@@ -1,3 +1,4 @@
+import { FORK_NAME } from "@t3tools/shared/forkBranding";
 import * as Cause from "effect/Cause";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
@@ -9,7 +10,7 @@ import { makeComponentLogger } from "./DesktopObservability.ts";
 // AppImage mounts change each run; the launcher must mount the image itself.
 const { logInfo, logWarning } = makeComponentLogger("desktop-cli-shim");
 
-export const MARKER = "Written by T3 Code: runs the desktop app's bundled t3 CLI.";
+export const MARKER = `Written by ${FORK_NAME}: runs the desktop app's bundled t3 CLI.`;
 
 const SERVER_ENTRY = "apps/server/dist/bin.mjs";
 
@@ -18,7 +19,7 @@ const shellWord = (value: string) => `'${value.replaceAll("'", `'"'"'`)}'`;
 const cmdText = (value: string) => value.replaceAll("%", "%%");
 const cmdWord = (value: string) => `"${cmdText(value)}"`;
 
-const MOVED = "T3 Code has moved or been removed. Open the app once to update this command.";
+const MOVED = `${FORK_NAME} has moved or been removed. Open the app once to update this command.`;
 
 export type CliShimTarget =
   | { readonly kind: "appimage"; readonly appImage: string; readonly executableName: string }
@@ -116,7 +117,7 @@ export const launcherPath = (environment: DesktopEnvironment.DesktopEnvironment[
   environment.path.join(
     environment.baseDir,
     "bin",
-    environment.platform === "win32" ? "t3.cmd" : "t3",
+    environment.platform === "win32" ? `${FORK_NAME}.cmd` : FORK_NAME,
   );
 
 export const install = Effect.gen(function* () {

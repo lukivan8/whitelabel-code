@@ -82,7 +82,13 @@ export function resolveWebIconOverrides(
   brand: WebAssetBrand,
   targetDirectory: string,
 ): ReadonlyArray<IconOverride> {
-  const sourcePaths = WEB_ICON_SOURCE_PATHS_BY_BRAND[brand];
+  const sourcePaths = {
+    ...WEB_ICON_SOURCE_PATHS_BY_BRAND[brand],
+    faviconIco: "assets/whitelabel/icon.ico",
+    favicon16Png: "assets/whitelabel/icon-16.png",
+    favicon32Png: "assets/whitelabel/icon-32.png",
+    appleTouchIconPng: "assets/whitelabel/icon-180.png",
+  };
   return [
     {
       sourceRelativePath: sourcePaths.faviconIco,
